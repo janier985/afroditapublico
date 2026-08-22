@@ -110,7 +110,7 @@ function App() {
       <header className="hero">
         <div>
           <small>Catálogo disponible</small>
-          <h1>Productos de belleza disponibles 1</h1>
+          <h1>Productos de belleza disponibles</h1>
           <p>Consulta nuestro catálogo actualizado y encuentra productos para tu negocio o uso personal.</p>
         </div>
       </header>
