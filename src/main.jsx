@@ -108,18 +108,10 @@ function App() {
   return (
     <main className="shell">
       <header className="hero">
-        <div className="brand">
-          {business.logo_url ? (
-            <img src={business.logo_url} alt={business.name || 'Catálogo'} />
-          ) : (
-            <div className="brandFallback">Catálogo</div>
-          )}
-        </div>
-
         <div>
           <small>Catálogo disponible</small>
-          <h1>{business.name || 'Productos disponibles'}</h1>
-          <p>Explora los productos disponibles actualmente.</p>
+          <h1>Productos de belleza disponibles</h1>
+          <p>Consulta nuestro catálogo actualizado y encuentra productos para tu negocio o uso personal.</p>
         </div>
       </header>
 
