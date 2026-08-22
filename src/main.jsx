@@ -3,16 +3,13 @@ import { createRoot } from 'react-dom/client';
 import './styles.css';
 
 const API_URL = import.meta.env.VITE_CATALOG_API_URL || 'https://afroditavirtual.com/public-catalog/tienda';
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '';
 
 function normalize(value) {
-  return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-}
-
-function whatsappUrl(product) {
-  const text = `Hola, quiero información sobre este producto: ${product.name}`;
-  const phone = WHATSAPP_NUMBER.replace(/\D+/g, '');
-  return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
 }
 
 function App() {
@@ -23,23 +20,46 @@ function App() {
 
   useEffect(() => {
     let mounted = true;
+
     async function loadCatalog() {
       try {
         setStatus('loading');
-        const response = await fetch(API_URL, { headers: { Accept: 'application/json' }, cache: 'no-store' });
-        if (!response.ok) throw new Error('No se pudo cargar el catálogo.');
+
+        const response = await fetch(API_URL, {
+          headers: {
+            Accept: 'application/json',
+          },
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          throw new Error('No se pudo cargar el catálogo.');
+        }
+
         const data = await response.json();
-        if (!mounted) return;
+
+        if (!mounted) {
+          return;
+        }
+
         setCatalog(data);
         setStatus('ready');
       } catch (error) {
         console.error(error);
-        if (!mounted) return;
+
+        if (!mounted) {
+          return;
+        }
+
         setStatus('error');
       }
     }
+
     loadCatalog();
-    return () => { mounted = false; };
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const categories = catalog?.categories || [];
@@ -47,19 +67,40 @@ function App() {
 
   const filteredProducts = useMemo(() => {
     const term = normalize(query);
+
     return products.filter((product) => {
       const matchesCategory = categorySlug === 'all' || product.category?.slug === categorySlug;
-      const haystack = normalize([product.name, product.description, product.category?.name, product.brand?.name, product.sku].join(' '));
+
+      const haystack = normalize([
+        product.name,
+        product.category?.name,
+      ].join(' '));
+
       return matchesCategory && (!term || haystack.includes(term));
     });
   }, [products, query, categorySlug]);
 
   if (status === 'loading') {
-    return <main className="shell center"><div className="loaderCard"><div className="spinner" /><strong>Cargando catálogo...</strong><span>Estamos consultando los productos disponibles.</span></div></main>;
+    return (
+      <main className="shell center">
+        <div className="loaderCard">
+          <div className="spinner" />
+          <strong>Cargando catálogo...</strong>
+          <span>Estamos consultando los productos disponibles.</span>
+        </div>
+      </main>
+    );
   }
 
   if (status === 'error') {
-    return <main className="shell center"><div className="emptyCard"><strong>No pudimos cargar el catálogo</strong><p>Revisa que el endpoint de Laravel esté activo y que VITE_CATALOG_API_URL esté bien configurado.</p></div></main>;
+    return (
+      <main className="shell center">
+        <div className="emptyCard">
+          <strong>No pudimos cargar el catálogo</strong>
+          <p>Revisa que el endpoint de Laravel esté activo y que VITE_CATALOG_API_URL esté bien configurado.</p>
+        </div>
+      </main>
+    );
   }
 
   const business = catalog?.business || {};
@@ -68,53 +109,81 @@ function App() {
     <main className="shell">
       <header className="hero">
         <div className="brand">
-          {business.logo_url ? <img src={business.logo_url} alt={business.name || 'Catálogo'} /> : <div className="brandFallback">Catálogo</div>}
+          {business.logo_url ? (
+            <img src={business.logo_url} alt={business.name || 'Catálogo'} />
+          ) : (
+            <div className="brandFallback">Catálogo</div>
+          )}
         </div>
+
         <div>
-          <small>Catálogo sin precios</small>
+          <small>Catálogo disponible</small>
           <h1>{business.name || 'Productos disponibles'}</h1>
-          <p>Explora los productos disponibles. Para consultar precios o disponibilidad detallada, escríbenos por WhatsApp.</p>
+          <p>Explora los productos disponibles actualmente.</p>
         </div>
       </header>
 
       <section className="filters">
-        <input type="search" placeholder="Buscar producto, marca o categoría..." value={query} onChange={(event) => setQuery(event.target.value)} />
+        <input
+          type="search"
+          placeholder="Buscar producto o categoría..."
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+
         <div className="chips">
-          <button type="button" className={categorySlug === 'all' ? 'active' : ''} onClick={() => setCategorySlug('all')}>Todo</button>
+          <button
+            type="button"
+            className={categorySlug === 'all' ? 'active' : ''}
+            onClick={() => setCategorySlug('all')}
+          >
+            Todo
+          </button>
+
           {categories.map((category) => (
-            <button key={category.id} type="button" className={categorySlug === category.slug ? 'active' : ''} onClick={() => setCategorySlug(category.slug)}>
+            <button
+              key={category.id}
+              type="button"
+              className={categorySlug === category.slug ? 'active' : ''}
+              onClick={() => setCategorySlug(category.slug)}
+            >
               {category.name}
             </button>
           ))}
         </div>
       </section>
 
-      <section className="count">{filteredProducts.length} producto(s) disponible(s)</section>
+      <section className="count">
+        {filteredProducts.length} producto(s) disponible(s)
+      </section>
 
       {filteredProducts.length > 0 ? (
         <section className="grid">
           {filteredProducts.map((product) => (
             <article className="card" key={product.id}>
               <div className="imageWrap">
-                {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" /> : <div className="imageFallback">Sin imagen</div>}
+                {product.image_url ? (
+                  <img src={product.image_url} alt={product.name} loading="lazy" />
+                ) : (
+                  <div className="imageFallback">Sin imagen</div>
+                )}
               </div>
+
               <div className="cardBody">
-                <div className="meta">{product.category?.name || 'Producto'}{product.brand?.name ? ` · ${product.brand.name}` : ''}</div>
-                <h2>{product.name}</h2>
-                <p>{product.description || 'Producto disponible para consulta.'}</p>
-                {product.has_variants && product.variants?.length > 0 ? (
-                  <div className="variants"><strong>Opciones disponibles:</strong><span>{product.variants.map((variant) => variant.name).join(', ')}</span></div>
-                ) : null}
-                <div className="actions">
-                  <a href={whatsappUrl(product)} target="_blank" rel="noreferrer" className="primary">Consultar por WhatsApp</a>
-                  {product.url ? <a href={product.url} target="_blank" rel="noreferrer" className="ghost">Ver producto</a> : null}
+                <div className="meta">
+                  {product.category?.name || 'Producto'}
                 </div>
+
+                <h2>{product.name}</h2>
               </div>
             </article>
           ))}
         </section>
       ) : (
-        <section className="emptyCard"><strong>No hay productos para esta búsqueda</strong><p>Intenta buscar otra palabra o selecciona otra categoría.</p></section>
+        <section className="emptyCard">
+          <strong>No hay productos para esta búsqueda</strong>
+          <p>Intenta buscar otra palabra o selecciona otra categoría.</p>
+        </section>
       )}
     </main>
   );
